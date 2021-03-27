@@ -16,7 +16,6 @@ verify:
     - master
     - beta
 
-
 .prep-git: &prep-git
   - apt-get update -qy && apt-get install openssh-client git -qy || apk add openssh-client git
   - eval $(ssh-agent -s)
