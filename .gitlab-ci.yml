@@ -1,0 +1,71 @@
+stages:
+  - verify
+  - release
+
+cache:
+  paths:
+    - node_modules
+
+verify:
+  stage: verify
+  script:
+    - yarn install
+    - yarn format & yarn lint
+
+.prep-git: &prep-git
+  - apt-get update -qy && apt-get install openssh-client git -qy || apk add openssh-client git
+  - eval $(ssh-agent -s)
+  - mkdir -p ~/.ssh
+  - chmod 700 ~/.ssh
+  - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+  - git config --global user.email $GITLAB_USER_EMAIL
+  - git config --global user.name $GITLAB_USER_NAME
+  - git config --global core.sshCommand 'ssh -o StrictHostKeyChecking=no'
+  - git config pull.rebase false
+  - git remote set-url --push origin git@gitlab.com:$CI_PROJECT_PATH.git
+  - git fetch
+
+beta_release:
+  stage: release
+  before_script:
+    - *prep-git
+    - apt-get install npm -qy || apk add npm
+    - npm i --quiet -g  @semantic-release/gitlab semantic-release-docker semantic-release
+  script:
+    - git checkout beta
+    - git reset --hard origin/development
+    - git clean -f -d
+    - git pull --allow-unrelated-histories
+    - git push -u origin beta
+    - docker build --quiet --tag swayme/home .
+    - |
+      echo "
+      branches:
+        - master
+        - name: beta
+          prerelease: true
+      plugins:
+        - '@semantic-release/commit-analyzer'
+        - '@semantic-release/release-notes-generator'
+        - '@semantic-release/gitlab'
+        - - 'semantic-release-docker'
+          - name: 'swayme/home'
+      " > .releaserc.yml
+    - npx semantic-release
+    - ssh -o StrictHostKeyChecking=no sway@$IP -p $PORT docker service update --image swayme/home  beta_home
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'schedule' && $CI_COMMIT_BRANCH == 'beta'
+
+prod_release:
+  stage: release
+  before_script:
+    - *prep-git
+  script:
+    - git checkout master
+    - git reset --hard origin/beta
+    - git clean -f -d
+    - git pull --allow-unrelated-histories
+    - git push -u origin master
+    - ssh -o StrictHostKeyChecking=no sway@$IP -p $PORT docker service update --image swayme/home  prod_home
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'schedule' && $CI_COMMIT_BRANCH == 'master'
