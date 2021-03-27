@@ -53,7 +53,7 @@ beta_release:
           - name: 'swayme/home'
       " > .releaserc.yml
     - npx semantic-release
-    - ssh -o StrictHostKeyChecking=no sway@$IP -p $PORT docker service update --image swayme/home  beta_home
+    - ssh -o StrictHostKeyChecking=no sway@$IP -p $PORT  docker stack deploy -c infrastructure/home/beta.yml beta
   rules:
     - if: $CI_PIPELINE_SOURCE == 'schedule' && $CI_COMMIT_BRANCH == 'beta'
 
@@ -67,6 +67,6 @@ prod_release:
     - git clean -f -d
     - git pull --allow-unrelated-histories
     - git push -u origin master
-    - ssh -o StrictHostKeyChecking=no sway@$IP -p $PORT docker service update --image swayme/home  prod_home
+    - ssh -o StrictHostKeyChecking=no sway@$IP -p $PORT  docker stack deploy -c infrastructure/home/prod.yml prod
   rules:
     - if: $CI_PIPELINE_SOURCE == 'schedule' && $CI_COMMIT_BRANCH == 'master'
