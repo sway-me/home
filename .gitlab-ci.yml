@@ -12,9 +12,9 @@ verify:
   script:
     - yarn install
     - yarn format & yarn lint
-except:
-  - master
-  - beta
+  except:
+    - master
+    - beta
 
 
 .prep-git: &prep-git
