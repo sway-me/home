@@ -8,6 +8,7 @@ cache:
 
 verify:
   stage: verify
+  image: node:14
   script:
     - yarn install
     - yarn format & yarn lint
