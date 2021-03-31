@@ -160,6 +160,26 @@ ul li::before {
   width: 100px;
 }
 
+.feed-heading {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.feed-item-title {
+  text-transform: initial;
+  letter-spacing: initial;
+  margin-bottom: 0;
+}
+
+.feed-item-title::before {
+  content: "\25e6 \2003";
+}
+
+.feed-item-desc {
+  margin-top: 8px;
+  margin-left: 24px;
+}
+
 @media only screen and (max-width: 600px) {
   .pitch {
     margin: 3rem;
